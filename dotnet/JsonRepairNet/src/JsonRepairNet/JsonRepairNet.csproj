@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>JsonRepairNet</RootNamespace>
+    <AssemblyName>JsonRepairNet</AssemblyName>
+    <PackageId>JsonRepairNet</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>composehk</Authors>
+    <Company>composehk</Company>
+    <Description>Repair malformed JSON from LLMs, APIs, and logs. A .NET 8 port of the core repair behavior from json_repair.</Description>
+    <PackageTags>json;repair;llm;parser</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/composehk/json_repair</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/composehk/json_repair</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\..\..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
