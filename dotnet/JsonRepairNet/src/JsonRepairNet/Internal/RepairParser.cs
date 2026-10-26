@@ -419,6 +419,12 @@ internal sealed class RepairParser
         if (hadColon)
         {
             _index++;
+            SkipTrivia();
+            while (_index < _length && _text[_index] == ':')
+            {
+                _index++;
+                SkipTrivia();
+            }
         }
         else if (!quoted && LooksLikeKeyAt(_index))
         {
