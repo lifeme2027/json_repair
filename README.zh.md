@@ -1,5 +1,7 @@
 # json_repair — 修复损坏的 JSON（Python 工具包）
 
+C# / .NET 8 移植说明见 [DOTNET.md](https://github.com/composehk/json_repair/blob/main/DOTNET.md)。
+
 [![PyPI](https://img.shields.io/pypi/v/json-repair)](https://pypi.org/project/json-repair/) ![Python version](https://img.shields.io/badge/python-3.10+-important) [![PyPI downloads](https://img.shields.io/pypi/dm/json-repair)](https://pypi.org/project/json-repair/) [![PyPI Downloads](https://static.pepy.tech/badge/json-repair)](https://pepy.tech/projects/json-repair) [![Github Sponsors](https://img.shields.io/github/sponsors/mangiucugna)](https://github.com/sponsors/mangiucugna) [![GitHub Repo stars](https://img.shields.io/github/stars/mangiucugna/json_repair?style=flat)](https://github.com/mangiucugna/json_repair/stargazers)
 
 > 本文档由 AI 翻译，如有疏漏欢迎指正。

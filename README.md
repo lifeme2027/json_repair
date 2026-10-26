@@ -1,3 +1,5 @@
+C# / .NET 8 port: [DOTNET.md](https://github.com/composehk/json_repair/blob/main/DOTNET.md).
+
 [![PyPI](https://img.shields.io/pypi/v/json-repair)](https://pypi.org/project/json-repair/)
 ![Python version](https://img.shields.io/badge/python-3.10+-important)
 [![PyPI downloads](https://img.shields.io/pypi/dm/json-repair)](https://pypi.org/project/json-repair/)
