@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>JsonRepairNet.Cli</RootNamespace>
+    <AssemblyName>json-repair</AssemblyName>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>json-repair</ToolCommandName>
+    <PackageId>JsonRepairNet.Cli</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>composehk</Authors>
+    <Description>Dotnet tool that repairs malformed JSON. Command name: json-repair.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/composehk/json_repair</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/composehk/json_repair</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JsonRepairNet\JsonRepairNet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JsonRepairNet.Tests" />
+  </ItemGroup>
+
+</Project>
