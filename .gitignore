@@ -13,3 +13,5 @@ src/json_repair.egg-info/
 htmlcov/
 .ruff_cache
 .cache
+dotnet/**/bin
+dotnet/**/obj
