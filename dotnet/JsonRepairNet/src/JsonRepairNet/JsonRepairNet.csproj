@@ -7,7 +7,7 @@
     <Version>0.1.0</Version>
     <Authors>composehk</Authors>
     <Company>composehk</Company>
-    <Description>Repair malformed JSON from LLMs, APIs, and logs. A .NET 8 port of the core repair behavior from json_repair.</Description>
+    <Description>Unofficial .NET port of json_repair: Repair malformed JSON from LLMs, APIs, and logs. A .NET 8 port of the core repair behavior from json_repair.</Description>
     <PackageTags>json;repair;llm;parser</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/composehk/json_repair</PackageProjectUrl>
