@@ -13,7 +13,14 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/composehk/json_repair</PackageProjectUrl>
     <RepositoryUrl>https://github.com/composehk/json_repair</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>json;repair;llm;cli;dotnet-tool</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JsonRepairNet\JsonRepairNet.csproj" />

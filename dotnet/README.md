@@ -1,15 +1,23 @@
 # JsonRepairNet
 
+[![dotnet](https://github.com/composehk/json_repair/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/composehk/json_repair/actions/workflows/dotnet.yml)
+
 [English](#english) | [中文](#中文)
 
-A .NET 8 class library and `dotnet` tool that repair malformed JSON. The repair ideas come from [json_repair](https://github.com/mangiucugna/json_repair). This port lives beside the Python package and does not replace it.
+## English
+
+> **Unofficial port.** JsonRepairNet is an unofficial .NET port. It is not affiliated with or endorsed by the upstream project or its author. The repair behavior is based on [json_repair](https://github.com/mangiucugna/json_repair) by Stefano Baccianella ([@mangiucugna](https://github.com/mangiucugna)), which is released under the MIT license. Credit for the original design and test scenarios belongs to the upstream project. This port covers part of that behavior (see [Limits](#limits)).
+
+A .NET 8 class library and `dotnet` tool that repair malformed JSON. This port lives beside the Python package and does not replace it.
+
+> **Status:** version `0.1.0` is not yet published to NuGet. Build it from source (see below).
 
 - Target framework: `net8.0`
 - Package id: `JsonRepairNet`
 - Tool command: `json-repair`
 - Runtime dependencies: `System.Text.Json` only (included in the shared framework)
 
-## Library
+### Library
 
 ```csharp
 using JsonRepairNet;
@@ -37,20 +45,27 @@ string pretty = JsonRepair.Repair(text, JsonRepairOptions.Indented(2));
 
 Valid JSON is returned unchanged. Set `JsonRepairOptions.WriteIndented` when you want that text pretty-printed. `IndentSize` is the number of spaces per level, from 0 through 16.
 
+Build, test, and pack from this repo (the package is not on NuGet yet):
+
+```bash
+dotnet build dotnet/JsonRepairNet/JsonRepairNet.sln -c Release
+dotnet test dotnet/JsonRepairNet/JsonRepairNet.sln -c Release
+dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet/JsonRepairNet.csproj -c Release -o /tmp/json-repair-nupkg
+```
+
+To use the packed library from another project, add the output folder as a package source:
+
+```bash
+dotnet add package JsonRepairNet --version 0.1.0 --source /tmp/json-repair-nupkg
+```
+
+Once published to NuGet, this will become:
+
 ```bash
 dotnet add package JsonRepairNet
-dotnet build
 ```
 
-From this repo:
-
-```bash
-dotnet build dotnet/JsonRepairNet/JsonRepairNet.sln
-dotnet test dotnet/JsonRepairNet/JsonRepairNet.sln
-dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet/JsonRepairNet.csproj
-```
-
-## CLI
+### CLI
 
 `json-repair` reads one file or, when the file is omitted, standard input. `--output` (`-o`) writes a file. `--indent` pretty-prints. A following integer sets the indent width; the default width is 2.
 
@@ -69,13 +84,15 @@ dotnet run --project dotnet/JsonRepairNet/src/JsonRepairNet.Cli -- broken.json -
 Install the tool locally after packing:
 
 ```bash
-dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet.Cli/JsonRepairNet.Cli.csproj -o /tmp/json-repair-nupkg
+dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet.Cli/JsonRepairNet.Cli.csproj -c Release -o /tmp/json-repair-nupkg
 dotnet tool install --global --add-source /tmp/json-repair-nupkg JsonRepairNet.Cli
 ```
 
+Once published to NuGet, this will become `dotnet tool install --global JsonRepairNet.Cli`.
+
 The CLI writes one trailing newline. Exit code `0` means the repair succeeded. Exit code `1` means bad arguments, a missing file, or input that could not be repaired.
 
-## Supported repairs
+### Supported repairs
 
 - Missing quotes around object keys or string values.
 - Missing commas, repeated commas, and trailing commas.
@@ -94,7 +111,7 @@ The CLI writes one trailing newline. Exit code `0` means the repair succeeded. E
 - Several top-level JSON values become one JSON array.
 - Duplicate keys in repaired objects keep the last value.
 
-## Limits
+### Limits
 
 - JSON Schema and Pydantic guidance are not part of this port. `strict` mode and streaming chunk reads are not part of it either.
 - Invalid input nested deeper than 256 containers fails with `JsonRepairException` instead of growing the call stack without a bound.
@@ -105,7 +122,11 @@ The CLI writes one trailing newline. Exit code `0` means the repair succeeded. E
 
 ## 中文
 
+> **非官方移植。** JsonRepairNet 是非官方的 .NET 移植，与上游项目及其作者没有隶属关系，也未获得其认可。修复行为参考 Stefano Baccianella（[@mangiucugna](https://github.com/mangiucugna)）的 [json_repair](https://github.com/mangiucugna/json_repair)，上游以 MIT 许可证发布。原始设计和测试场景的功劳属于上游项目。本移植只覆盖其中一部分行为（见下方“已知限制”）。
+
 这是 json_repair 核心修复能力的 .NET 8 类库和 `dotnet` 工具，与 Python 包放在同一仓库，互不影响。
+
+> **状态：** `0.1.0` 版本尚未发布到 NuGet，请从源码构建（见下文）。
 
 - 目标框架：`net8.0`
 - 包名：`JsonRepairNet`
@@ -140,17 +161,24 @@ string pretty = JsonRepair.Repair(text, JsonRepairOptions.Indented(2));
 
 合法 JSON 按原文字返回。需要美化时使用 `JsonRepairOptions.WriteIndented`。`IndentSize` 是每一级的空格数，范围是 0 到 16。
 
+在本仓库中构建、测试和打包（包尚未发布到 NuGet）：
+
 ```bash
-dotnet add package JsonRepairNet
-dotnet build
+dotnet build dotnet/JsonRepairNet/JsonRepairNet.sln -c Release
+dotnet test dotnet/JsonRepairNet/JsonRepairNet.sln -c Release
+dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet/JsonRepairNet.csproj -c Release -o /tmp/json-repair-nupkg
 ```
 
-在本仓库中：
+在其他项目中使用打好的包时，把输出目录作为包源：
 
 ```bash
-dotnet build dotnet/JsonRepairNet/JsonRepairNet.sln
-dotnet test dotnet/JsonRepairNet/JsonRepairNet.sln
-dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet/JsonRepairNet.csproj
+dotnet add package JsonRepairNet --version 0.1.0 --source /tmp/json-repair-nupkg
+```
+
+发布到 NuGet 之后，可以改用：
+
+```bash
+dotnet add package JsonRepairNet
 ```
 
 ### 命令行
@@ -172,9 +200,11 @@ dotnet run --project dotnet/JsonRepairNet/src/JsonRepairNet.Cli -- broken.json -
 打包后安装：
 
 ```bash
-dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet.Cli/JsonRepairNet.Cli.csproj -o /tmp/json-repair-nupkg
+dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet.Cli/JsonRepairNet.Cli.csproj -c Release -o /tmp/json-repair-nupkg
 dotnet tool install --global --add-source /tmp/json-repair-nupkg JsonRepairNet.Cli
 ```
+
+发布到 NuGet 之后，可以直接使用 `dotnet tool install --global JsonRepairNet.Cli`。
 
 命令行会在结果末尾加一个换行。退出码 `0` 表示修复成功。退出码 `1` 表示参数错误、文件不存在，或输入无法修复。
 
