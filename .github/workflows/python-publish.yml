@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   deploy:
+    # Only publish from the upstream repository; forks must not publish to PyPI.
+    if: github.repository == 'mangiucugna/json_repair'
 
     runs-on: ubuntu-latest
 
