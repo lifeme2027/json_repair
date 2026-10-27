@@ -8,11 +8,11 @@
     <ToolCommandName>json-repair</ToolCommandName>
     <PackageId>JsonRepairNet.Cli</PackageId>
     <Version>0.1.0</Version>
-    <Authors>composehk</Authors>
+    <Authors>lifeme2027</Authors>
     <Description>Unofficial .NET port of json_repair: Dotnet tool that repairs malformed JSON. Command name: json-repair.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/composehk/json_repair</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/composehk/json_repair</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/lifeme2027/json_repair</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/lifeme2027/json_repair</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>json;repair;llm;cli;dotnet-tool</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

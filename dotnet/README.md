@@ -1,8 +1,12 @@
 # JsonRepairNet
 
-[![dotnet](https://github.com/composehk/json_repair/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/composehk/json_repair/actions/workflows/dotnet.yml)
+[![dotnet](https://github.com/lifeme2027/json_repair/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/lifeme2027/json_repair/actions/workflows/dotnet.yml)
 
 [English](#english) | [中文](#中文)
+
+## Origin and license
+
+This repository is a fork of [mangiucugna/json_repair](https://github.com/mangiucugna/json_repair) (Python package by Stefano Baccianella). The original MIT license and copyright are retained unchanged (see [LICENSE](https://github.com/lifeme2027/json_repair/blob/main/LICENSE)). The .NET 8 library and CLI in `dotnet/JsonRepairNet` are an unofficial community port added in this fork; they are not affiliated with, endorsed by, or maintained by the upstream author. This is a general-purpose developer tool provided as-is; it is not financial advice and should not be relied on to repair data where correctness matters without checking the output.
 
 ## English
 

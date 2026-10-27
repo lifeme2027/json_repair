@@ -1,4 +1,4 @@
-C# / .NET 8 port: [DOTNET.md](https://github.com/composehk/json_repair/blob/main/DOTNET.md).
+C# / .NET 8 port: [DOTNET.md](https://github.com/lifeme2027/json_repair/blob/main/DOTNET.md). This repository is a fork of [mangiucugna/json_repair](https://github.com/mangiucugna/json_repair) (MIT, original license and copyright retained in [LICENSE](LICENSE)); the .NET port is an unofficial addition and is not affiliated with the upstream author.
 
 [![PyPI](https://img.shields.io/pypi/v/json-repair)](https://pypi.org/project/json-repair/)
 ![Python version](https://img.shields.io/badge/python-3.10+-important)
