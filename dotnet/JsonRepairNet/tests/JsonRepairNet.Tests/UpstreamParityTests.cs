@@ -114,13 +114,24 @@ public class UpstreamParityTests
         AssertJsonEqual("\"abc\"", actual);
     }
 
-    // Unquoted key with a trailing quote is absorbed into the key name
-    // ({"a": 1, b": 2} -> {"a":1,"b\"":2}). Upstream strips that quote.
-    [Fact]
-    public void DocumentedDifferencesFromUpstream_MissingQuoteKey()
+    public static IEnumerable<object[]> TrailingQuoteKeyCases()
     {
-        var actual = JsonRepair.Repair("""{"a": 1, b": 2}""");
-        AssertJsonEqual("""{"a":1,"b\"":2}""", actual);
+        yield return Case("trailing_quote_key", """{"a": 1, b": 2}""", """{"a": 1, "b": 2}""");
+        yield return Case("trailing_quote_first_key", """{a": 1}""", """{"a": 1}""");
+        yield return Case("trailing_quote_many_keys", """{"a": 1, b": 2, c": 3}""", """{"a": 1, "b": 2, "c": 3}""");
+        yield return Case("trailing_quote_key_unclosed", """{"a": 1, b": 2""", """{"a": 1, "b": 2}""");
+        yield return Case("trailing_quote_array_item", """["x", y"]""", """["x", "y"]""");
+    }
+
+    // A key with only a trailing quote (no opening quote) is treated as the unquoted
+    // key, so {"a": 1, b": 2} repairs to {"a":1,"b":2} as Python json_repair does.
+    [Theory]
+    [MemberData(nameof(TrailingQuoteKeyCases))]
+    public void FixedToMatchUpstream_TrailingQuoteKey(string name, string input, string expected)
+    {
+        _ = name;
+        var actual = JsonRepair.Repair(input);
+        AssertJsonEqual(expected, actual);
     }
 
     // Upstream returns an empty string for blank, prose, or bare-word top-level

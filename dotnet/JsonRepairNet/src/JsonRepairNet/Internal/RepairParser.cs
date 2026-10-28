@@ -869,7 +869,31 @@ internal sealed class RepairParser
         }
 
         var key = _text[start.._index].Trim();
+        if (key.Length > 1 && IsQuote(key[^1]) && !HasQuote(key.AsSpan(0, key.Length - 1)))
+        {
+            // A bare key with only a trailing quote (b": 2): the opening quote went
+            // missing, so treat it as the unquoted key b. Only when a colon follows.
+            var colon = SkipTriviaIndex(_index);
+            if (colon < _length && _text[colon] == ':')
+            {
+                key = key[..^1];
+            }
+        }
+
         return key.Length == 0 ? null : key;
+    }
+
+    private static bool HasQuote(ReadOnlySpan<char> text)
+    {
+        foreach (var ch in text)
+        {
+            if (IsQuote(ch))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private string ReadBare()
