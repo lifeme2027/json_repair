@@ -50,6 +50,39 @@ public class UpstreamParityTests
         AssertJsonEqual(expected, actual);
     }
 
+    public static IEnumerable<object[]> AdditionalParityCases()
+    {
+        yield return Case("incomplete_exp_plus", "[1e+]", """["1e"]""");
+        yield return Case("incomplete_exp_minus", "[1e-]", """["1e"]""");
+        yield return Case("bare_exp_marker", """{"key": 1e }""", """{"key":1}""");
+        yield return Case("tuple_strings", """("a", "b", "c")""", """["a","b","c"]""");
+        yield return Case("empty_tuple_value", """{"empty": ()}""", """{"empty":[]}""");
+        yield return Case("single_tuple_scalar", """("x")""", "\"x\"");
+        yield return Case("single_tuple_in_object", """{"string_group": ("x")}""", """{"string_group":"x"}""");
+        yield return Case("colon_inside_unclosed_key", """{"key:value}""", """{"key":"value"}""");
+        yield return Case("newline_in_key", "{\"key_1\n\": \"value\"}", """{"key_1":"value"}""");
+        yield return Case("empty_then_key_quote", "{\"\" key\":\"val\"", """{" key":"val"}""");
+        yield return Case("braces_in_bare_value", "{text:words{words in brackets}}", """{"text":"words{words in brackets}"}""");
+        yield return Case("braces_in_bare_value_suffix", "{text:words{words in brackets}m}", """{"text":"words{words in brackets}m"}""");
+        yield return Case("hash_comment_before_inner_close", """{ "key": { "key2": "value2" # comment }, "key3": "value3" }""", """{"key":{"key2":"value2"},"key3":"value3"}""");
+        yield return Case("missing_colon_comma_number", """{"key", 105,12,""", """{"key":"105,12"}""");
+        yield return Case("extra_brace_between_array_objects", """[{"key":"value"}},{"key":"value"}]""", """[{"key":"value"},{"key":"value"}]""");
+        yield return Case("array_closed_with_brace_then_keys", """{"key1": ["value1", "value2"}, "key2": ["value3", "value4"]}""", """{"key1":["value1","value2"],"key2":["value3","value4"]}""");
+        yield return Case("merge_after_close", """{"key": "value"}, "key2": "value2"}""", """{"key":"value","key2":"value2"}""");
+        yield return Case("merge_after_close_empty", """{"key": "value"}, "key2": }""", """{"key":"value","key2":""}""");
+        yield return Case("merge_after_close_three", """{"key1": "value1"}, "key2": "value2", "key3": "value3"}""", """{"key1":"value1","key2":"value2","key3":"value3"}""");
+        yield return Case("adjacent_keys_after_string", """{"number": 1,"reason": "According...""ans": "YES"}""", """{"number":1,"reason":"According...","ans":"YES"}""");
+    }
+
+    [Theory]
+    [MemberData(nameof(AdditionalParityCases))]
+    public void FixedToMatchUpstream_AdditionalParity(string name, string input, string expected)
+    {
+        _ = name;
+        var actual = JsonRepair.Repair(input);
+        AssertJsonEqual(expected, actual);
+    }
+
     public static IEnumerable<object[]> RepeatedColonCases()
     {
         yield return Case("double_colon", """{"a":: 1, "b": 2}""", """{"a": 1, "b": 2}""");

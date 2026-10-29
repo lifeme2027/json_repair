@@ -362,6 +362,17 @@ internal sealed class RepairParser
             if (current == '}')
             {
                 _index++;
+                SkipTrivia();
+                if (_index < _length && _text[_index] == '}' && ParentIs(ContextKind.Array))
+                {
+                    _index++;
+                }
+
+                if (TryContinueTopLevelMembers())
+                {
+                    continue;
+                }
+
                 break;
             }
 
@@ -421,6 +432,15 @@ internal sealed class RepairParser
             _index++;
             SkipTrivia();
             while (_index < _length && _text[_index] == ':')
+            {
+                _index++;
+                SkipTrivia();
+            }
+        }
+        else if (_index < _length && _text[_index] == ',')
+        {
+            var afterComma = SkipTriviaIndex(_index + 1);
+            if (afterComma < _length && IsNumberStart(afterComma))
             {
                 _index++;
                 SkipTrivia();
@@ -493,7 +513,7 @@ internal sealed class RepairParser
         EnsureDepth(depth);
         var tuple = IsExplicitTuple(_index);
         _index++;
-        Push(ContextKind.Array);
+        Push(ContextKind.Paren);
         List<JVal> items;
         try
         {
@@ -690,24 +710,43 @@ internal sealed class RepairParser
                 return builder.ToString().TrimEnd();
             }
 
-            if (role == StringRole.Key && current == ':' && _index + 1 < _length && IsQuote(_text[_index + 1]) && IsPlainIdentifier(builder))
+            if (role == StringRole.Key && current == ':' && IsPlainIdentifier(builder) && KeyColonEndsUnclosedKey())
             {
-                return builder.ToString();
+                return builder.ToString().TrimEnd();
             }
 
             if (IsMatchingClose(open, current))
             {
                 if (role == StringRole.Key)
                 {
+                    if (builder.Length == 0)
+                    {
+                        var afterEmpty = SkipTriviaIndex(_index + 1);
+                        if (afterEmpty < _length && _text[afterEmpty] == ':')
+                        {
+                            _index++;
+                            return string.Empty;
+                        }
+
+                        _index++;
+                        continue;
+                    }
+
                     if (ShouldEndKey())
                     {
                         _index++;
-                        return builder.ToString();
+                        return builder.ToString().TrimEnd();
                     }
 
                     builder.Append(current);
                     _index++;
                     continue;
+                }
+
+                if (NextQuotedKey(_index + 1))
+                {
+                    _index++;
+                    return builder.ToString();
                 }
 
                 if (IsImmediateWordContinuation(_index + 1))
@@ -724,7 +763,8 @@ internal sealed class RepairParser
                 }
 
                 var next = SkipTriviaIndex(_index + 1);
-                var structural = next >= _length || _text[next] is ',' or '}' or ']';
+                var structural = next >= _length || _text[next] is ',' or '}' or ']'
+                    || (_text[next] == ')' && _stack.Contains(ContextKind.Paren));
                 if (!structural)
                 {
                     builder.Append(current);
@@ -751,6 +791,125 @@ internal sealed class RepairParser
         }
 
         return builder.ToString().TrimEnd();
+    }
+
+    private bool TryContinueTopLevelMembers()
+    {
+        if (_stack.Count != 1 || _stack[0] != ContextKind.Object)
+        {
+            return false;
+        }
+
+        var mark = _index;
+        SkipTrivia();
+        if (_index >= _length || _text[_index] != ',')
+        {
+            _index = mark;
+            return false;
+        }
+
+        _index++;
+        SkipTrivia();
+        if (_index < _length && IsQuote(_text[_index]) && CanStartKey(_index))
+        {
+            return true;
+        }
+
+        _index = mark;
+        return false;
+    }
+
+    private bool TryReadBalancedContainer(out string container)
+    {
+        container = string.Empty;
+        if (_index >= _length)
+        {
+            return false;
+        }
+
+        var open = _text[_index];
+        var close = open switch
+        {
+            '{' => '}',
+            '[' => ']',
+            _ => '\0',
+        };
+        if (close == '\0')
+        {
+            return false;
+        }
+
+        var depth = 0;
+        var cursor = _index;
+        while (cursor < _length)
+        {
+            var current = _text[cursor];
+            if (current == open)
+            {
+                depth++;
+            }
+            else if (current == close)
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    container = _text[_index..(cursor + 1)];
+                    _index = cursor + 1;
+                    return true;
+                }
+            }
+
+            cursor++;
+        }
+
+        return false;
+    }
+
+    private bool HashCommentEndsAt(char current)
+    {
+        if (current is '\n' or '\r')
+        {
+            return true;
+        }
+
+        if (current == '}' && _stack.Contains(ContextKind.ObjectValue))
+        {
+            return true;
+        }
+
+        if (current == ']' && _stack.Contains(ContextKind.Array))
+        {
+            return true;
+        }
+
+        return current == ':' && _stack.Contains(ContextKind.Object) && !_stack.Contains(ContextKind.ObjectValue);
+    }
+
+    private bool KeyColonEndsUnclosedKey()
+    {
+        if (_index + 1 < _length && IsQuote(_text[_index + 1]))
+        {
+            return true;
+        }
+
+        var cursor = _index + 1;
+        while (cursor < _length)
+        {
+            var current = _text[cursor];
+            if (IsQuote(current))
+            {
+                return false;
+            }
+
+            if (current == '}')
+            {
+                return true;
+            }
+
+            cursor++;
+        }
+
+        return true;
     }
 
     private bool TryConsumeRedundantDoubledQuote(char open, out string simple)
@@ -829,7 +988,9 @@ internal sealed class RepairParser
             cursor++;
         }
 
-        return cursor >= _length || _text[cursor] is ',' or '}' or ']' or '`';
+        return cursor >= _length
+            || _text[cursor] is ',' or '}' or ']' or '`'
+            || (_text[cursor] == ')' && _stack.Contains(ContextKind.Paren));
     }
 
     private string? ReadKey()
@@ -905,6 +1066,12 @@ internal sealed class RepairParser
             if (current is '}' or ']' or ')')
             {
                 break;
+            }
+
+            if ((current is '{' or '[') && TryReadBalancedContainer(out var container))
+            {
+                builder.Append(container);
+                continue;
             }
 
             if (IsCommentStart(_index) && (builder.Length == 0 || char.IsWhiteSpace(builder[^1])))
@@ -1025,6 +1192,18 @@ internal sealed class RepairParser
             if (current is '+' or '-' && exponent && _index > start && _text[_index - 1] is 'e' or 'E')
             {
                 _index++;
+                if (_index >= _length || !char.IsDigit(_text[_index]))
+                {
+                    _index--;
+                    break;
+                }
+
+                continue;
+            }
+
+            if (current == ',' && _stack.Count > 0 && _stack[^1] == ContextKind.ObjectValue)
+            {
+                _index++;
                 continue;
             }
 
@@ -1052,6 +1231,34 @@ internal sealed class RepairParser
         }
 
         var token = _text[start.._index];
+        var strippedSign = false;
+        while (token.Length > 0 && token[^1] is ',' or '+' or '-' or 'e' or 'E' or '/')
+        {
+            if (token[^1] is 'e' or 'E')
+            {
+                strippedSign |= _index < _length && _text[_index] is '+' or '-';
+                if (!strippedSign)
+                {
+                    // Upstream: a bare trailing exponent marker is dropped ("1e" -> 1),
+                    // but "1e+" / "1e-" keep "1e" as a string.
+                    token = token[..^1];
+                    _index--;
+                }
+
+                break;
+            }
+
+            strippedSign |= token[^1] is '+' or '-';
+
+            token = token[..^1];
+            _index--;
+        }
+
+        if (token.Contains(','))
+        {
+            return new JStr(token);
+        }
+
         return TryNormalizeNumber(token, out var literal) ? new JNum(literal) : new JStr(token);
     }
 
@@ -1111,6 +1318,12 @@ internal sealed class RepairParser
         length = 0;
         value = JNull.Instance;
         return false;
+    }
+
+    private bool NextQuotedKey(int index)
+    {
+        index = SkipTriviaIndex(index);
+        return index < _length && IsQuote(_text[index]) && LooksLikeKeyAt(index);
     }
 
     private bool LooksLikeKeyAt(int index)
@@ -1173,7 +1386,7 @@ internal sealed class RepairParser
         }
 
         var current = _text[next];
-        return current is '{' or '[' or '('
+        return current is '{' or '[' or '(' or ')'
             || IsQuote(current)
             || char.IsDigit(current)
             || current is '-' or '.'
@@ -1428,7 +1641,8 @@ internal sealed class RepairParser
 
             if (current == '#')
             {
-                while (index < _length && _text[index] != '\n')
+                index++;
+                while (index < _length && !HashCommentEndsAt(_text[index]))
                 {
                     index++;
                 }
@@ -1544,7 +1758,7 @@ internal sealed class RepairParser
         var exponent = text.LastIndexOfAny(['e', 'E']);
         if (exponent >= 0 && (exponent == text.Length - 1 || (exponent == text.Length - 2 && text[^1] is '+' or '-')))
         {
-            text = text[..exponent];
+            return false;
         }
 
         if (text.EndsWith('.'))
@@ -1690,6 +1904,7 @@ internal sealed class RepairParser
         Object,
         ObjectValue,
         Array,
+        Paren,
     }
 
     private enum StringRole
