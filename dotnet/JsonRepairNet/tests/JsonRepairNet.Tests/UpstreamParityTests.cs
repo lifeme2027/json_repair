@@ -72,6 +72,24 @@ public class UpstreamParityTests
         yield return Case("merge_after_close_empty", """{"key": "value"}, "key2": }""", """{"key":"value","key2":""}""");
         yield return Case("merge_after_close_three", """{"key1": "value1"}, "key2": "value2", "key3": "value3"}""", """{"key1":"value1","key2":"value2","key3":"value3"}""");
         yield return Case("adjacent_keys_after_string", """{"number": 1,"reason": "According...""ans": "YES"}""", """{"number":1,"reason":"According...","ans":"YES"}""");
+        yield return Case("top_level_empty_then_empty", "[]{}", "[]");
+        yield return Case("top_level_empty_then_object", """[]{"key":"value"}""", """{"key":"value"}""");
+        yield return Case("top_level_object_then_empty_array", """{"key": "value"}, []""", """{"key":"value"}""");
+        yield return Case("top_level_same_shape_arrays", """[{"key":"value"}][{"key":"value_after"}]""", """[{"key":"value_after"}]""");
+        yield return Case("empty_object_in_array", "[{]", "[]");
+        yield return Case("unclosed_quote_in_array", "[\"", "[]");
+        yield return Case("set_as_array", "{'key1', 'key2'}", """["key1","key2"]""");
+        yield return Case("split_string_after_quote", """["value1" value2", "value3"]""", """["value1","value2","value3"]""");
+        yield return Case("skip_stray_words_between_members", """{"value_1": true, SHOULD_NOT_EXIST "value_2": "data" AAAA }""", """{"value_1":true,"value_2":"data"}""");
+        yield return Case("bare_value_stops_at_quote", "{0:a\"0\"", """{"0":"a"}""");
+        yield return Case("empty_object_reparsed_as_array", "[{5}s ", "[[5]]");
+        yield return Case("merge_trailing_arrays_into_key", """{ "key": ["arrayvalue"], ["arrayvalue1"], ["arrayvalue2"], "key3": "value3" }""", """{"key":["arrayvalue","arrayvalue1","arrayvalue2"],"key3":"value3"}""");
+        yield return Case("top_level_object_then_empty_object", """{"key": "value"}, {}""", """{"key":"value"}""");
+        yield return Case("set_as_array_three", "{'item1', 'item2', 'item3'}", """["item1","item2","item3"]""");
+        yield return Case("stray_word_after_quote_in_array", """{"bad_one": ["Lorem Ipsum","consectetur" comment],"good_one": ["elit","sed","tempor"]}""", """{"bad_one":["Lorem Ipsum","consectetur","comment"],"good_one":["elit","sed","tempor"]}""");
+        yield return Case("inner_quotes_in_array_string_kept", """["lorem "ipsum" sic"]""", """["lorem \"ipsum\" sic"]""");
+        yield return Case("array_after_string_member_becomes_key", """{ "key": ["arrayvalue"], "key3": "value3", ["arrayvalue1"] }""", """{"key":["arrayvalue"],"key3":"value3","arrayvalue1":""}""");
+        yield return Case("merge_trailing_row_arrays_into_key", """{ "key": [[1, 2, 3], "a", "b"], [[4, 5, 6], [7, 8, 9]] }""", """{"key":[[1,2,3],"a","b",[4,5,6],[7,8,9]]}""");
     }
 
     [Theory]

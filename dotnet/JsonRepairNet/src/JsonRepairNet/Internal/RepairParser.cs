@@ -156,7 +156,7 @@ internal sealed class RepairParser
 
     private JVal? ParseTop()
     {
-        var found = new List<(JVal Value, bool CommaBefore)>();
+        var found = new List<JVal>();
         var comma = false;
         var guard = 0;
         while (_index < _length && guard++ < _length + 2)
@@ -180,7 +180,24 @@ internal sealed class RepairParser
                 var value = ParseRootValue();
                 if (value is not null && _index > mark)
                 {
-                    found.Add((value, comma));
+                    if (found.Count == 0)
+                    {
+                        found.Add(value);
+                    }
+                    else if (IsTruthy(value))
+                    {
+                        if (!comma && IsSameStructure(found[^1], value))
+                        {
+                            found.RemoveAt(found.Count - 1);
+                        }
+                        else if (!IsTruthy(found[^1]))
+                        {
+                            found.RemoveAt(found.Count - 1);
+                        }
+
+                        found.Add(value);
+                    }
+
                     comma = false;
                     continue;
                 }
@@ -196,50 +213,18 @@ internal sealed class RepairParser
             _index++;
         }
 
-        return Select(found);
-    }
-
-    private static JVal? Select(List<(JVal Value, bool CommaBefore)> found)
-    {
         if (found.Count == 0)
         {
             return null;
         }
 
-        var anyContainer = found.Any(item => item.Value is JArr or JObj);
-        var chosen = new List<JVal>();
-        if (!anyContainer)
+        if (found.Count == 1)
         {
-            foreach (var item in found)
-            {
-                chosen.Add(item.Value);
-            }
-        }
-        else
-        {
-            for (var i = 0; i < found.Count; i++)
-            {
-                var item = found[i];
-                var inCommaSequence = item.CommaBefore || (i + 1 < found.Count && found[i + 1].CommaBefore);
-                if (item.Value is JArr or JObj || inCommaSequence)
-                {
-                    chosen.Add(item.Value);
-                }
-            }
-        }
-
-        if (chosen.Count == 0)
-        {
-            return null;
-        }
-
-        if (chosen.Count == 1)
-        {
-            return chosen[0];
+            return found[0];
         }
 
         var array = new JArr();
-        array.Items.AddRange(chosen);
+        array.Items.AddRange(found);
         return array;
     }
 
@@ -316,14 +301,24 @@ internal sealed class RepairParser
         return SkipTriviaIndex(after) >= _length;
     }
 
-    private JObj ParseObject(int depth)
+    private JVal ParseObject(int depth)
     {
         EnsureDepth(depth);
+        var innerStart = _index + 1;
         _index++;
         Push(ContextKind.Object);
         try
         {
-            return ParseObjectContents(depth);
+            var obj = ParseObjectContents(depth);
+            if (obj.Props.Count == 0 && _index > innerStart + 1)
+            {
+                _index = innerStart;
+                var array = new JArr();
+                array.Items.AddRange(ParseSequence(depth, '}'));
+                return array;
+            }
+
+            return obj;
         }
         finally
         {
@@ -393,6 +388,11 @@ internal sealed class RepairParser
                 continue;
             }
 
+            if (current == '[' && TryMergeArrayContinuation(obj, depth))
+            {
+                continue;
+            }
+
             if (IsStrayQuote())
             {
                 _index++;
@@ -445,8 +445,16 @@ internal sealed class RepairParser
                 _index++;
                 SkipTrivia();
             }
+            else
+            {
+                return true;
+            }
         }
         else if (!quoted && LooksLikeKeyAt(_index))
+        {
+            return true;
+        }
+        else if (_index < _length && _text[_index] == '}')
         {
             return true;
         }
@@ -488,6 +496,7 @@ internal sealed class RepairParser
         }
 
         obj.Set(key, value);
+        SkipNonMemberGarbage();
         return true;
     }
 
@@ -605,7 +614,21 @@ internal sealed class RepairParser
                 continue;
             }
 
+            if (IsStrictlyEmpty(value))
+            {
+                SkipTrivia();
+                var atDelimiter = _index < _length && (_text[_index] == ',' || _text[_index] == closer);
+                if (!atDelimiter || (value is JObj && closer == ']' && _index < _length && _text[_index] == ']'))
+                {
+                    continue;
+                }
+            }
+
             items.Add(value);
+            if (value is JArr)
+            {
+                SkipTrailingArrayGarbage(closer);
+            }
         }
 
         return items;
@@ -756,7 +779,7 @@ internal sealed class RepairParser
                     continue;
                 }
 
-                if (ClosesBeforeNextElement(_index))
+                if (ClosesBeforeNextElement(_index, role, builder.ToString().Contains('"')))
                 {
                     _index++;
                     return builder.ToString();
@@ -949,7 +972,7 @@ internal sealed class RepairParser
         return next >= _length || _text[next] is ':' or ',' or '}' or ']';
     }
 
-    private bool ClosesBeforeNextElement(int quoteIndex)
+    private bool ClosesBeforeNextElement(int quoteIndex, StringRole role, bool hasInnerQuote)
     {
         var cursor = quoteIndex + 1;
         if (cursor >= _length || !char.IsWhiteSpace(_text[cursor]))
@@ -963,7 +986,28 @@ internal sealed class RepairParser
             return false;
         }
 
-        return IsQuote(_text[next]) || _text[next] is '{' or '[' || IsNumberStart(next) || CanMatchLiteral(next);
+        if (IsQuote(_text[next]) || _text[next] is '{' or '[' || IsNumberStart(next) || CanMatchLiteral(next))
+        {
+            return true;
+        }
+
+        if (role == StringRole.Array && !hasInnerQuote && IsIdentStart(_text[next]))
+        {
+            return true;
+        }
+
+        if (role == StringRole.ObjectValue && IsIdentStart(_text[next]))
+        {
+            var scan = next;
+            while (scan < _length && (char.IsWhiteSpace(_text[scan]) || IsIdentStart(_text[scan]) || IsIdentPart(_text[scan])))
+            {
+                scan++;
+            }
+
+            return scan >= _length || _text[scan] == '}';
+        }
+
+        return false;
     }
 
     private bool IsImmediateWordContinuation(int index) =>
@@ -1091,6 +1135,11 @@ internal sealed class RepairParser
 
             if (IsQuote(current))
             {
+                if (_stack.Count > 0 && _stack[^1] == ContextKind.ObjectValue)
+                {
+                    break;
+                }
+
                 if (QuoteEndsBare(_index) || LooksLikeKeyAt(_index))
                 {
                     if (QuoteEndsBare(_index))
@@ -1894,6 +1943,262 @@ internal sealed class RepairParser
         '\u2018' or '\u2019' => value is '\u2019' or '\u2018' or '\'',
         _ => false,
     };
+
+    private bool TryMergeArrayContinuation(JObj obj, int depth)
+    {
+        if (obj.Props.Count == 0 || obj.Props[^1].Value is not JArr previous)
+        {
+            return false;
+        }
+
+        var incoming = ParseArray(depth + 1);
+        MergeArrayContinuation(previous, incoming);
+        SkipTrivia();
+        if (_index < _length && _text[_index] == ',')
+        {
+            _index++;
+        }
+
+        return true;
+    }
+
+    private static void MergeArrayContinuation(JArr previous, JArr incoming)
+    {
+        var nestedLength = 0;
+        var nestedCount = 0;
+        var nestedAgree = true;
+        foreach (var item in previous.Items)
+        {
+            if (item is not JArr nested)
+            {
+                continue;
+            }
+
+            if (nestedCount == 0)
+            {
+                nestedLength = nested.Items.Count;
+            }
+            else if (nested.Items.Count != nestedLength)
+            {
+                nestedAgree = false;
+            }
+
+            nestedCount++;
+        }
+
+        if (nestedCount > 0 && nestedAgree && nestedLength > 0)
+        {
+            var tail = new List<JVal>();
+            while (previous.Items.Count > 0 && previous.Items[^1] is not JArr)
+            {
+                tail.Add(previous.Items[^1]);
+                previous.Items.RemoveAt(previous.Items.Count - 1);
+            }
+
+            tail.Reverse();
+            if (tail.Count > 0 && tail.Count % nestedLength == 0)
+            {
+                for (var offset = 0; offset < tail.Count; offset += nestedLength)
+                {
+                    var row = new JArr();
+                    for (var i = 0; i < nestedLength; i++)
+                    {
+                        row.Items.Add(tail[offset + i]);
+                    }
+
+                    previous.Items.Add(row);
+                }
+            }
+            else
+            {
+                previous.Items.AddRange(tail);
+            }
+
+            if (incoming.Items.Count == 0)
+            {
+                return;
+            }
+
+            var incomingAllArrays = true;
+            foreach (var item in incoming.Items)
+            {
+                if (item is not JArr)
+                {
+                    incomingAllArrays = false;
+                    break;
+                }
+            }
+
+            if (incomingAllArrays)
+            {
+                previous.Items.AddRange(incoming.Items);
+            }
+            else
+            {
+                previous.Items.Add(incoming);
+            }
+
+            return;
+        }
+
+        if (incoming.Items.Count == 1 && incoming.Items[0] is JArr only)
+        {
+            previous.Items.AddRange(only.Items);
+            return;
+        }
+
+        previous.Items.AddRange(incoming.Items);
+    }
+
+    private void SkipTrailingArrayGarbage(char closer)
+    {
+        SkipTrivia();
+        if (_index >= _length || _text[_index] is ',' || _text[_index] == closer)
+        {
+            return;
+        }
+
+        if (!IsIdentStart(_text[_index]))
+        {
+            return;
+        }
+
+        var cursor = _index;
+        while (cursor < _length)
+        {
+            var current = _text[cursor];
+            if (current == closer || current == ',')
+            {
+                break;
+            }
+
+            if (!char.IsWhiteSpace(current) && !IsIdentStart(current) && !IsIdentPart(current))
+            {
+                return;
+            }
+
+            cursor++;
+        }
+
+        _index = cursor;
+    }
+
+    private void SkipNonMemberGarbage()
+    {
+        SkipTrivia();
+        if (_index >= _length || _text[_index] is ',' or '}' or ']' or ')' || LooksLikeKeyAt(_index) || _text[_index] == '[')
+        {
+            return;
+        }
+
+        while (_index < _length)
+        {
+            var current = _text[_index];
+            if (current is ',' or '}' or ']' or ')')
+            {
+                break;
+            }
+
+            if (LooksLikeKeyAt(_index) || current == '[')
+            {
+                break;
+            }
+
+            _index++;
+        }
+    }
+
+    private static bool IsTruthy(JVal value) => value switch
+    {
+        JNull => false,
+        JBool flag => flag.Value,
+        JNum number => IsNonZeroNumber(number.Literal),
+        JStr text => text.Value.Length > 0,
+        JArr array => array.Items.Count > 0,
+        JObj obj => obj.Props.Count > 0,
+        _ => true,
+    };
+
+    private static bool IsNonZeroNumber(string literal)
+    {
+        if (!double.TryParse(literal, NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+        {
+            return literal.Length > 0;
+        }
+
+        return number != 0;
+    }
+
+    private static bool IsStrictlyEmpty(JVal value) => value switch
+    {
+        JStr text => text.Value.Length == 0,
+        JArr array => array.Items.Count == 0,
+        JObj obj => obj.Props.Count == 0,
+        _ => false,
+    };
+
+    private static bool IsSameStructure(JVal left, JVal right)
+    {
+        if (left.GetType() != right.GetType())
+        {
+            return false;
+        }
+
+        if (left is JObj leftObject && right is JObj rightObject)
+        {
+            if (leftObject.Props.Count != rightObject.Props.Count)
+            {
+                return false;
+            }
+
+            foreach (var pair in leftObject.Props)
+            {
+                var found = false;
+                foreach (var other in rightObject.Props)
+                {
+                    if (other.Key != pair.Key)
+                    {
+                        continue;
+                    }
+
+                    if (!IsSameStructure(pair.Value, other.Value))
+                    {
+                        return false;
+                    }
+
+                    found = true;
+                    break;
+                }
+
+                if (!found)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if (left is JArr leftArray && right is JArr rightArray)
+        {
+            if (leftArray.Items.Count != rightArray.Items.Count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < leftArray.Items.Count; i++)
+            {
+                if (!IsSameStructure(leftArray.Items[i], rightArray.Items[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return true;
+    }
 
     private static bool IsIdentStart(char value) => char.IsLetter(value) || value is '_' or '$';
 

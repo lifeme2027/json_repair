@@ -21,6 +21,15 @@ Aligned 20 more inputs from the upstream Python test suite with `repair_json` (j
 - Members after a premature top-level `}` (`{"key": "value"}, "key2": "value2"}` and similar) are merged into the object.
 - `"According...""ans": "YES"` closes the string and starts the next key.
 
+Aligned 18 more upstream inputs (209 of 225 upstream `repair_json` test inputs now match json-repair 0.64.2 as parsed JSON, up from 191), each with a regression test in `UpstreamParityTests`:
+
+- Several top-level values: an empty value is replaced by the next non-empty one, a later value with the same shape replaces the earlier one, and empty trailing values are dropped (`[]{}` becomes `[]`, `[]{"key":"value"}` becomes `{"key":"value"}`, `{"key": "value"}, []` and `{"key": "value"}, {}` become `{"key":"value"}`, `[{"key":"value"}][{"key":"value_after"}]` becomes `[{"key":"value_after"}]`).
+- Empty partial items in arrays are dropped: `[{]` and `["` become `[]`.
+- Sets become arrays: `{'key1', 'key2'}` becomes `["key1","key2"]`; `[{5}s ` becomes `[[5]]`.
+- Arrays that follow an array-valued member are merged into it (`{ "key": ["arrayvalue"], ["arrayvalue1"], ["arrayvalue2"], "key3": "value3" }`, `{ "key": [[1, 2, 3], "a", "b"], [[4, 5, 6], [7, 8, 9]] }`, and the `headers`/`rows` table case).
+- A quote followed by a bare word ends an array string when the string has no inner quotes (`["value1" value2", "value3"]`, `"consectetur" comment"`).
+- Stray words between members are dropped (`SHOULD_NOT_EXIST`, `AAAA`), and a bare object value stops at a quote (`{0:a"0"` becomes `{"0":"a"}`).
+
 ## 0.1.1
 
 Maintenance release. Published to NuGet as `JsonRepairNet` and `JsonRepairNet.Cli` by jun chen, the repository owner.
@@ -57,12 +66,10 @@ Published to NuGet as `JsonRepairNet` and `JsonRepairNet.Cli` by jun chen, the r
 
 - Mid-value block comments: Python can treat `/* c */` as the value (`{"a":""}` for `{"a": /* c */ 1, "b": 2}`); this port skips the comment and keeps the following value.
 - Truncated keys: Python drops a dangling key (`{"a": 1, "b` → `{"a":1}`); this port closes it as `{"a":1,"b":""}`.
-- Other upstream test inputs that still differ (31 of 221 checked against json-repair 0.64.2). Upstream handles these with heuristics that are hard to port without breaking other cases, or it returns an empty string where this port returns valid JSON:
-  - Top-level input with several values (`[]{}`, `[]{"key":"value"}`, `[{"key":"value"}][{"key":"value_after"}]`, `{"key": "value"}, []`): upstream keeps only one value; this port returns all of them in an array.
+- Other upstream test inputs that still differ (16 of 225 checked against json-repair 0.64.2). Upstream handles these with string heuristics that are hard to port without breaking other cases, or it returns an empty string where this port returns valid JSON:
   - Bare literals and empty strings at the top level (`True`, `False`, `Null`, `""`, `"`, `'"'`): upstream returns an empty string; this port returns `true`, `false`, `null`, or `""`.
-  - Truncated or empty containers (`[{]`, `["`, `[{"key": "value", "key`): upstream drops the partial item.
-  - Upstream rejoins arrays that end early (`{ "key": ["arrayvalue"], ["arrayvalue1"], ...}`, `{ "key": [[1, 2, 3], "a", "b"], [[4, 5, 6], ...] }`) and turns a set into an array (`{'key1', 'key2'}`).
-  - Stray quotes and words inside strings or between members (`["value1" value2", "value3"]`, `"consectetur" comment"`, `SHOULD_NOT_EXIST`, `COMMENT "notes": "lorem "ipsum", sic."`, doubled quotes like `""answer""`, `""""`, `{ "a" : "{ b": {} }" }`, the unquoted sentences in `{"lorem": sic tamet. ...}`, and the long `"lorem "ipsum" dolor ..."` array).
+  - Truncated key after an object in an array (`[{"key": "value", "key`): upstream returns `[{"key":"value"},["key"]]`.
+  - Stray quotes and words inside strings or between members (`COMMENT "notes": "lorem "ipsum", sic."`, doubled quotes like `""answer""` and `""""`, `{ "a" : "{ b": {} }" }`, the unquoted sentences in `{"lorem": sic tamet. ...}`, and the long `"lorem "ipsum" dolor ..."` array).
   - Escaped JSON inside a string (`{"key": "{\\"key\\\":[...`), a markdown fence inside a string value (`{"key": "```json {...}```"}`), and `{"key": "value"}, "key2" "value2"}` with a missing colon after an early close.
 - `NaN` / `Infinity`: Python emits those non-JSON tokens; this port returns a valid JSON string, currently `["NaN, Infinity"]` for `[NaN, Infinity]`.
 - Leading zeros: Python coerces `[007, 1.50]` to `[7, 1.5]`; this port keeps `"007"` as a string and `1.50` as a number.
