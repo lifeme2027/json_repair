@@ -14,7 +14,7 @@ This repository is a fork of [mangiucugna/json_repair](https://github.com/mangiu
 
 A .NET 8 class library and `dotnet` tool that repair malformed JSON. This port lives beside the Python package and does not replace it.
 
-> **Status:** version `0.1.0` is not yet published to NuGet. Build it from source (see below).
+> **Status:** the NuGet packages [`JsonRepairNet`](https://www.nuget.org/packages/JsonRepairNet) and [`JsonRepairNet.Cli`](https://www.nuget.org/packages/JsonRepairNet.Cli) (since 0.1.0) are published by jun chen, the owner of this repository. The current version is `0.1.1`. You can also build from source (see below).
 
 - Target framework: `net8.0`
 - Package id: `JsonRepairNet`
@@ -49,7 +49,7 @@ string pretty = JsonRepair.Repair(text, JsonRepairOptions.Indented(2));
 
 Valid JSON is returned unchanged. Set `JsonRepairOptions.WriteIndented` when you want that text pretty-printed. `IndentSize` is the number of spaces per level, from 0 through 16.
 
-Build, test, and pack from this repo (the package is not on NuGet yet):
+Build, test, and pack from this repo:
 
 ```bash
 dotnet build dotnet/JsonRepairNet/JsonRepairNet.sln -c Release
@@ -60,10 +60,10 @@ dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet/JsonRepairNet.csproj -c Relea
 To use the packed library from another project, add the output folder as a package source:
 
 ```bash
-dotnet add package JsonRepairNet --version 0.1.0 --source /tmp/json-repair-nupkg
+dotnet add package JsonRepairNet --version 0.1.1 --source /tmp/json-repair-nupkg
 ```
 
-Once published to NuGet, this will become:
+To use the package published on NuGet instead:
 
 ```bash
 dotnet add package JsonRepairNet
@@ -92,7 +92,7 @@ dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet.Cli/JsonRepairNet.Cli.csproj 
 dotnet tool install --global --add-source /tmp/json-repair-nupkg JsonRepairNet.Cli
 ```
 
-Once published to NuGet, this will become `dotnet tool install --global JsonRepairNet.Cli`.
+To install the tool published on NuGet instead, run `dotnet tool install --global JsonRepairNet.Cli`.
 
 The CLI writes one trailing newline. Exit code `0` means the repair succeeded. Exit code `1` means bad arguments, a missing file, or input that could not be repaired.
 
@@ -130,7 +130,7 @@ The CLI writes one trailing newline. Exit code `0` means the repair succeeded. E
 
 这是 json_repair 核心修复能力的 .NET 8 类库和 `dotnet` 工具，与 Python 包放在同一仓库，互不影响。
 
-> **状态：** `0.1.0` 版本尚未发布到 NuGet，请从源码构建（见下文）。
+> **状态：** NuGet 包 [`JsonRepairNet`](https://www.nuget.org/packages/JsonRepairNet) 与 [`JsonRepairNet.Cli`](https://www.nuget.org/packages/JsonRepairNet.Cli)（自 0.1.0 起）由本仓库所有者 jun chen 发布，当前版本为 `0.1.1`。也可以从源码构建（见下文）。
 
 - 目标框架：`net8.0`
 - 包名：`JsonRepairNet`
@@ -165,7 +165,7 @@ string pretty = JsonRepair.Repair(text, JsonRepairOptions.Indented(2));
 
 合法 JSON 按原文字返回。需要美化时使用 `JsonRepairOptions.WriteIndented`。`IndentSize` 是每一级的空格数，范围是 0 到 16。
 
-在本仓库中构建、测试和打包（包尚未发布到 NuGet）：
+在本仓库中构建、测试和打包：
 
 ```bash
 dotnet build dotnet/JsonRepairNet/JsonRepairNet.sln -c Release
@@ -176,10 +176,10 @@ dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet/JsonRepairNet.csproj -c Relea
 在其他项目中使用打好的包时，把输出目录作为包源：
 
 ```bash
-dotnet add package JsonRepairNet --version 0.1.0 --source /tmp/json-repair-nupkg
+dotnet add package JsonRepairNet --version 0.1.1 --source /tmp/json-repair-nupkg
 ```
 
-发布到 NuGet 之后，可以改用：
+要使用 NuGet 上已发布的包，可以改用：
 
 ```bash
 dotnet add package JsonRepairNet
@@ -208,7 +208,7 @@ dotnet pack dotnet/JsonRepairNet/src/JsonRepairNet.Cli/JsonRepairNet.Cli.csproj 
 dotnet tool install --global --add-source /tmp/json-repair-nupkg JsonRepairNet.Cli
 ```
 
-发布到 NuGet 之后，可以直接使用 `dotnet tool install --global JsonRepairNet.Cli`。
+要安装 NuGet 上已发布的工具，可以直接运行 `dotnet tool install --global JsonRepairNet.Cli`。
 
 命令行会在结果末尾加一个换行。退出码 `0` 表示修复成功。退出码 `1` 表示参数错误、文件不存在，或输入无法修复。
 

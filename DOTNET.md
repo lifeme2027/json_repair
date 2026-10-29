@@ -7,7 +7,7 @@ This repo keeps the original Python package and adds a C# / .NET 8 port of the c
 - Library package id: `JsonRepairNet` (project `dotnet/JsonRepairNet/src/JsonRepairNet`)
 - CLI package id / project: `JsonRepairNet.Cli` (`dotnet/JsonRepairNet/src/JsonRepairNet.Cli`)
 - Tool command: `json-repair`
-- Status: unofficial port, not affiliated with or endorsed by the upstream project; not yet published to NuGet. Release notes: [dotnet/CHANGELOG.md](dotnet/CHANGELOG.md)
+- Status: unofficial port, not affiliated with or endorsed by the upstream project; the NuGet packages `JsonRepairNet` and `JsonRepairNet.Cli` (since 0.1.0) are published by jun chen, the repository owner. Release notes: [dotnet/CHANGELOG.md](dotnet/CHANGELOG.md)
 
 Run the CLI from source (no install needed):
 
@@ -35,7 +35,7 @@ Python sources under `src/json_repair` are unchanged.
 - 类库包名：`JsonRepairNet`（项目 `dotnet/JsonRepairNet/src/JsonRepairNet`）
 - 命令行包名 / 项目：`JsonRepairNet.Cli`（`dotnet/JsonRepairNet/src/JsonRepairNet.Cli`）
 - 命令行名称：`json-repair`
-- 状态：非官方移植，与上游项目没有隶属关系，也未获其认可；尚未发布到 NuGet。更新记录：[dotnet/CHANGELOG.md](dotnet/CHANGELOG.md)
+- 状态：非官方移植，与上游项目没有隶属关系，也未获其认可；NuGet 包 `JsonRepairNet` 与 `JsonRepairNet.Cli`（自 0.1.0 起）由本仓库所有者 jun chen 发布。更新记录：[dotnet/CHANGELOG.md](dotnet/CHANGELOG.md)
 
 不安装、直接从源码运行命令行：
 

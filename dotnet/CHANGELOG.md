@@ -2,9 +2,23 @@
 
 All notable changes to the .NET port (`dotnet/`) are listed here. This port is unofficial and is not affiliated with or endorsed by the upstream [json_repair](https://github.com/mangiucugna/json_repair) project. The Python package in this repository has its own history and is not covered by this file.
 
-## 0.1.0 (unreleased)
+## 0.1.1
 
-Not yet published to NuGet and no release or tag exists. Build from source; see [README.md](README.md).
+Maintenance release. Published to NuGet as `JsonRepairNet` and `JsonRepairNet.Cli` by jun chen, the repository owner.
+
+### Fixed
+
+- A key with only a trailing quote is treated as an unquoted key, so `{"a": 1, b": 2}` now repairs to `{"a":1,"b":2}`, matching upstream Python `json_repair`.
+
+### Changed
+
+- The `JsonRepairNet.Cli` package now includes the MIT `LICENSE` file, as the `JsonRepairNet` package already did.
+- Release builds are now deterministic (`Deterministic` and `ContinuousIntegrationBuild`), so the packed assemblies and symbols no longer contain local build paths.
+- The test suite now has 140 tests.
+
+## 0.1.0
+
+Published to NuGet as `JsonRepairNet` and `JsonRepairNet.Cli` by jun chen, the repository owner. No Git tag or GitHub release exists for it. You can also build from source; see [README.md](README.md).
 
 ### Added
 

@@ -7,7 +7,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>json-repair</ToolCommandName>
     <PackageId>JsonRepairNet.Cli</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>lifeme2027</Authors>
     <Description>Unofficial .NET port of json_repair: Dotnet tool that repairs malformed JSON. Command name: json-repair.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

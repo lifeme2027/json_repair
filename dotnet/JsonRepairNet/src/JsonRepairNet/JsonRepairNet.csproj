@@ -4,7 +4,7 @@
     <RootNamespace>JsonRepairNet</RootNamespace>
     <AssemblyName>JsonRepairNet</AssemblyName>
     <PackageId>JsonRepairNet</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>lifeme2027</Authors>
     <Company>lifeme2027</Company>
     <Description>Unofficial .NET port of json_repair: Repair malformed JSON from LLMs, APIs, and logs. A .NET 8 port of the core repair behavior from json_repair.</Description>
