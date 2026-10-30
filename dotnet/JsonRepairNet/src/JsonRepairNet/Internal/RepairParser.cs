@@ -969,7 +969,19 @@ internal sealed class RepairParser
     private bool ShouldEndKey()
     {
         var next = SkipTriviaIndex(_index + 1);
-        return next >= _length || _text[next] is ':' or ',' or '}' or ']';
+        if (next >= _length || _text[next] is ':' or ',' or '}' or ']')
+        {
+            return true;
+        }
+
+        // Missing colon between a quoted key and a quoted value: "key" "value".
+        if (!IsQuote(_text[next]) || !TryScanQuoted(next, out var afterValue))
+        {
+            return false;
+        }
+
+        afterValue = SkipTriviaIndex(afterValue);
+        return afterValue >= _length || _text[afterValue] is ',' or '}' or ']';
     }
 
     private bool ClosesBeforeNextElement(int quoteIndex, StringRole role, bool hasInnerQuote)

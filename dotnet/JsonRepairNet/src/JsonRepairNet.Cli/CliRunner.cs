@@ -2,8 +2,14 @@ using JsonRepairNet;
 
 namespace JsonRepairNet.Cli;
 
-internal static class CliRunner
+/// <summary>
+/// Entry point for the <c>json-repair</c> command. Exposed so tests can drive stdin, stdout, and stderr.
+/// </summary>
+public static class CliRunner
 {
+    /// <summary>
+    /// Runs the CLI with the given arguments and streams. Returns the process exit code.
+    /// </summary>
     public static int Run(string[] args, TextReader input, TextWriter output, TextWriter error)
     {
         try
@@ -18,6 +24,18 @@ internal static class CliRunner
             {
                 output.WriteLine(HelpText);
                 return 0;
+            }
+
+            if (parsed.Inline && parsed.InputPath is null)
+            {
+                error.WriteLine("Error: Inline mode requires a filename");
+                return 1;
+            }
+
+            if (parsed.Inline && parsed.OutputPath is not null)
+            {
+                error.WriteLine("Error: You cannot pass both --inline and --output");
+                return 1;
             }
 
             string text;
@@ -45,13 +63,14 @@ internal static class CliRunner
             }
 
             var payload = json + Environment.NewLine;
-            if (parsed.OutputPath is null)
+            var destination = parsed.Inline ? parsed.InputPath : parsed.OutputPath;
+            if (destination is null)
             {
                 output.Write(payload);
             }
             else
             {
-                File.WriteAllText(parsed.OutputPath, payload);
+                File.WriteAllText(destination, payload);
             }
 
             return 0;
@@ -71,6 +90,7 @@ internal static class CliRunner
         string? outputPath = null;
         int? indent = null;
         var help = false;
+        var inline = false;
 
         for (var index = 0; index < args.Length; index++)
         {
@@ -78,6 +98,12 @@ internal static class CliRunner
             if (arg is "-h" or "--help")
             {
                 help = true;
+                continue;
+            }
+
+            if (arg is "-i" or "--inline")
+            {
+                inline = true;
                 continue;
             }
 
@@ -150,7 +176,7 @@ internal static class CliRunner
             return false;
         }
 
-        parsed = new ParsedArgs(help, inputPath, outputPath, indent);
+        parsed = new ParsedArgs(help, inline, inputPath, outputPath, indent);
         return true;
     }
 
@@ -171,12 +197,13 @@ internal static class CliRunner
         json-repair — repair malformed JSON
 
         Usage:
-          json-repair [file] [--output <file>] [--indent [n]]
+          json-repair [file] [--output <file>] [--inline] [--indent [n]]
 
         With no file, JSON is read from stdin.
         --output, -o   Write the repaired JSON to a file.
+        --inline, -i   Replace the input file with the repaired JSON.
         --indent       Pretty-print. Optional n is the number of spaces (default 2).
         """;
 
-    private readonly record struct ParsedArgs(bool Help, string? InputPath, string? OutputPath, int? Indent);
+    private readonly record struct ParsedArgs(bool Help, bool Inline, string? InputPath, string? OutputPath, int? Indent);
 }

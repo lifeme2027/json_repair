@@ -71,7 +71,7 @@ dotnet add package JsonRepairNet
 
 ### CLI
 
-`json-repair` reads one file or, when the file is omitted, standard input. `--output` (`-o`) writes a file. `--indent` pretty-prints. A following integer sets the indent width; the default width is 2.
+`json-repair` reads one file or, when the file is omitted, standard input. `--output` (`-o`) writes a file. `--inline` (`-i`) replaces the input file. `--indent` pretty-prints. A following integer sets the indent width; the default width is 2.
 
 ```bash
 json-repair broken.json --output fixed.json --indent 2
@@ -187,7 +187,7 @@ dotnet add package JsonRepairNet
 
 ### 命令行
 
-`json-repair` 从文件读取；省略文件时从标准输入读取。`--output`（`-o`）写入文件。`--indent` 美化输出。后面可以跟空格数，默认 2。
+`json-repair` 从文件读取；省略文件时从标准输入读取。`--output`（`-o`）写入文件。`--inline`（`-i`）原地覆盖输入文件。`--indent` 美化输出。后面可以跟空格数，默认 2。
 
 ```bash
 json-repair broken.json --output fixed.json --indent 2

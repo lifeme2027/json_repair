@@ -71,6 +71,7 @@ public class UpstreamParityTests
         yield return Case("merge_after_close", """{"key": "value"}, "key2": "value2"}""", """{"key":"value","key2":"value2"}""");
         yield return Case("merge_after_close_empty", """{"key": "value"}, "key2": }""", """{"key":"value","key2":""}""");
         yield return Case("merge_after_close_three", """{"key1": "value1"}, "key2": "value2", "key3": "value3"}""", """{"key1":"value1","key2":"value2","key3":"value3"}""");
+        yield return Case("merge_after_close_missing_colon", """{"key": "value"}, "key2" "value2"}""", """{"key":"value","key2":"value2"}""");
         yield return Case("adjacent_keys_after_string", """{"number": 1,"reason": "According...""ans": "YES"}""", """{"number":1,"reason":"According...","ans":"YES"}""");
         yield return Case("top_level_empty_then_empty", "[]{}", "[]");
         yield return Case("top_level_empty_then_object", """[]{"key":"value"}""", """{"key":"value"}""");

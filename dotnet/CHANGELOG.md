@@ -4,7 +4,13 @@ All notable changes to the .NET port (`dotnet/`) are listed here. This port is u
 
 ## Unreleased
 
+### Added
+
+- `json-repair` accepts `--inline`/`-i` to replace the input file, matching the Python CLI. Tests cover stdin, file input, stdout, `--output`/`-o`, `--inline`, `--indent`, `--help`, and error exit codes. `CliRunner.Run` is public so those tests can supply streams.
+
 ### Fixed
+
+- Members after a premature top-level `}` with a missing colon (`{"key": "value"}, "key2" "value2"}`) are merged into the object.
 
 Aligned 20 more inputs from the upstream Python test suite with `repair_json` (json-repair 0.64.2). Each one has a regression test in `UpstreamParityTests`:
 
@@ -66,11 +72,11 @@ Published to NuGet as `JsonRepairNet` and `JsonRepairNet.Cli` by jun chen, the r
 
 - Mid-value block comments: Python can treat `/* c */` as the value (`{"a":""}` for `{"a": /* c */ 1, "b": 2}`); this port skips the comment and keeps the following value.
 - Truncated keys: Python drops a dangling key (`{"a": 1, "b` → `{"a":1}`); this port closes it as `{"a":1,"b":""}`.
-- Other upstream test inputs that still differ (16 of 225 checked against json-repair 0.64.2). Upstream handles these with string heuristics that are hard to port without breaking other cases, or it returns an empty string where this port returns valid JSON:
+- Other upstream test inputs that still differ (15 of 225 checked against json-repair 0.64.2). Upstream handles these with string heuristics that are hard to port without breaking other cases, or it returns an empty string where this port returns valid JSON:
   - Bare literals and empty strings at the top level (`True`, `False`, `Null`, `""`, `"`, `'"'`): upstream returns an empty string; this port returns `true`, `false`, `null`, or `""`.
   - Truncated key after an object in an array (`[{"key": "value", "key`): upstream returns `[{"key":"value"},["key"]]`.
   - Stray quotes and words inside strings or between members (`COMMENT "notes": "lorem "ipsum", sic."`, doubled quotes like `""answer""` and `""""`, `{ "a" : "{ b": {} }" }`, the unquoted sentences in `{"lorem": sic tamet. ...}`, and the long `"lorem "ipsum" dolor ..."` array).
-  - Escaped JSON inside a string (`{"key": "{\\"key\\\":[...`), a markdown fence inside a string value (`{"key": "```json {...}```"}`), and `{"key": "value"}, "key2" "value2"}` with a missing colon after an early close.
+  - Escaped JSON inside a string (`{"key": "{\\"key\\\":[...`) and a markdown fence inside a string value (`{"key": "```json {...}```"}`).
 - `NaN` / `Infinity`: Python emits those non-JSON tokens; this port returns a valid JSON string, currently `["NaN, Infinity"]` for `[NaN, Infinity]`.
 - Leading zeros: Python coerces `[007, 1.50]` to `[7, 1.5]`; this port keeps `"007"` as a string and `1.50` as a number.
 - Unclosed quoted scalars such as `"abc`: Python returns empty output; this port closes the string (`"abc"`).
